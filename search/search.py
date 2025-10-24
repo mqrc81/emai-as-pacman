@@ -153,7 +153,23 @@ def depth_first_search(problem):
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    expanded = set()
+    queue = util.Queue()
+    queue.push((problem.get_start_state(), []))
+    while not queue.is_empty():
+        (state, actions) = queue.pop()
+
+        if state in expanded:
+            continue
+        expanded.add(state)
+
+        if problem.is_goal_state(state):
+            return actions
+
+        for (next_state, action, cost) in problem.get_successors(state):
+            queue.push((next_state, actions + [action]))
+
+    return []
 
 def uniform_cost_search(problem):
     """Search the node of least total cost first."""
