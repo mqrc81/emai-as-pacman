@@ -132,32 +132,18 @@ def depth_first_search(problem):
     print("Start's successors:", problem.get_successors(problem.get_start_state()))
     """
     "*** YOUR CODE HERE ***"
-    expanded = set()
-    stack = util.Stack()
-    stack.push((problem.get_start_state(), []))
-    while not stack.is_empty():
-        (state, actions) = stack.pop()
-
-        if state in expanded:
-            continue
-        expanded.add(state)
-
-        if problem.is_goal_state(state):
-            return actions
-
-        for (next_state, action, cost) in problem.get_successors(state):
-            stack.push((next_state, actions + [action]))
-
-    return []
+    return generic_first_search(problem, util.Stack())
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
+    return generic_first_search(problem, util.Queue())
+
+def generic_first_search(problem, stack_or_queue):
     expanded = set()
-    queue = util.Queue()
-    queue.push((problem.get_start_state(), []))
-    while not queue.is_empty():
-        (state, actions) = queue.pop()
+    stack_or_queue.push((problem.get_start_state(), []))
+    while not stack_or_queue.is_empty():
+        (state, actions) = stack_or_queue.pop()
 
         if state in expanded:
             continue
@@ -167,7 +153,7 @@ def breadth_first_search(problem):
             return actions
 
         for (next_state, action, cost) in problem.get_successors(state):
-            queue.push((next_state, actions + [action]))
+            stack_or_queue.push((next_state, actions + [action]))
 
     return []
 
