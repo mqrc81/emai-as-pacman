@@ -60,7 +60,6 @@ class SearchProblem:
         """
         util.raise_not_defined()
 
-
 def tiny_maze_search(problem):
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
@@ -69,7 +68,7 @@ def tiny_maze_search(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
 
 # def addSuccessors(problem, addCost=True):
 
@@ -108,8 +107,8 @@ class SearchNode:
             current_node = current_node.parent
         path.reverse()
         return path
-    
-    # Consider 2 nodes to be equal if their coordinates are equal (regardless of everything else)
+
+    # Consider 2 nodes to be equal if their coordinates are equal (regardless of everything else)
     # def __eq__(self, __o: obj) -> bool:
     #     if (type(__o) is SearchNode):
     #         return self.__state == __o.__state
@@ -133,9 +132,23 @@ def depth_first_search(problem):
     print("Start's successors:", problem.get_successors(problem.get_start_state()))
     """
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    expanded = set()
+    stack = util.Stack()
+    stack.push((problem.get_start_state(), []))
+    while not stack.is_empty():
+        (state, actions) = stack.pop()
 
+        if state in expanded:
+            continue
+        expanded.add(state)
 
+        if problem.is_goal_state(state):
+            return actions
+
+        for (next_state, action, cost) in problem.get_successors(state):
+            stack.push((next_state, actions + [action]))
+
+    return []
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
