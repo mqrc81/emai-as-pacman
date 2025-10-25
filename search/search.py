@@ -117,6 +117,27 @@ class SearchNode:
     # # def __hash__(self) -> int:
     # #     return hash(self.__state)
 
+def generic_search(problem, frontier, push_to_frontier):
+    expanded = set()
+    push_to_frontier(problem.get_start_state(), [], 0)
+    while not frontier.is_empty():
+        (state, actions) = frontier.pop()
+
+        if state in expanded:
+            continue
+        expanded.add(state)
+
+        if problem.is_goal_state(state):
+            return actions
+
+        for (next_state, action, cost) in problem.get_successors(state):
+            push_to_frontier(next_state, actions + [action], cost)
+
+    return []
+
+def generic_first_search(problem, frontier):
+    return generic_search(problem, frontier, lambda state, actions, cost: frontier.push((state, actions)))
+
 def depth_first_search(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -139,28 +160,11 @@ def breadth_first_search(problem):
     "*** YOUR CODE HERE ***"
     return generic_first_search(problem, util.Queue())
 
-def generic_first_search(problem, stack_or_queue):
-    expanded = set()
-    stack_or_queue.push((problem.get_start_state(), []))
-    while not stack_or_queue.is_empty():
-        (state, actions) = stack_or_queue.pop()
-
-        if state in expanded:
-            continue
-        expanded.add(state)
-
-        if problem.is_goal_state(state):
-            return actions
-
-        for (next_state, action, cost) in problem.get_successors(state):
-            stack_or_queue.push((next_state, actions + [action]))
-
-    return []
-
 def uniform_cost_search(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    queue = util.PriorityQueue()
+    return generic_search(problem, queue, lambda state, actions, cost: queue.push((state, actions), cost))
 
 def null_heuristic(state, problem=None):
     """
