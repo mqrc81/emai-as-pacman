@@ -121,7 +121,7 @@ def generic_search(problem, frontier, push_to_frontier):
     expanded = set()
     push_to_frontier(problem.get_start_state(), [], 0)
     while not frontier.is_empty():
-        (state, actions) = frontier.pop()
+        (state, actions, cumulative_cost) = frontier.pop()
 
         if state in expanded:
             continue
@@ -131,12 +131,10 @@ def generic_search(problem, frontier, push_to_frontier):
             return actions
 
         for (next_state, action, cost) in problem.get_successors(state):
-            push_to_frontier(next_state, actions + [action], cost)
+            next_cumulative_cost = cumulative_cost + cost
+            push_to_frontier(next_state, actions + [action], next_cumulative_cost)
 
     return []
-
-def generic_first_search(problem, frontier):
-    return generic_search(problem, frontier, lambda state, actions, cost: frontier.push((state, actions)))
 
 def depth_first_search(problem):
     """
@@ -153,18 +151,23 @@ def depth_first_search(problem):
     print("Start's successors:", problem.get_successors(problem.get_start_state()))
     """
     "*** YOUR CODE HERE ***"
-    return generic_first_search(problem, util.Stack())
+    frontier = util.Stack()
+    push = lambda s, a, c: frontier.push((s, a, c))
+    return generic_search(problem, frontier, push)
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    return generic_first_search(problem, util.Queue())
+    frontier = util.Queue()
+    push = lambda s, a, c: frontier.push((s, a, c))
+    return generic_search(problem, frontier, push)
 
 def uniform_cost_search(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    queue = util.PriorityQueue()
-    return generic_search(problem, queue, lambda state, actions, cost: queue.push((state, actions), cost))
+    frontier = util.PriorityQueue()
+    push = lambda s, a, c: frontier.push((s, a, c), c)
+    return generic_search(problem, frontier, push)
 
 def null_heuristic(state, problem=None):
     """
@@ -176,7 +179,9 @@ def null_heuristic(state, problem=None):
 def a_star_search(problem, heuristic=null_heuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    frontier = util.PriorityQueue()
+    push = lambda s, a, c: frontier.push((s, a, c), c + heuristic(s, problem))
+    return generic_search(problem, frontier, push)
 
 # Abbreviations
 bfs = breadth_first_search
