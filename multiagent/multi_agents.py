@@ -13,9 +13,9 @@
 
 
 import random
-import util
 
-from game import Agent
+import util
+from game import Agent, Directions
 from util import manhattan_distance
 
 class ReflexAgent(Agent):
@@ -83,6 +83,11 @@ class ReflexAgent(Agent):
             eval_food = 0.0
         eval_food = 20 * eval_food
 
+        ############# movement evaluation
+        movement_penalty = 0
+        if action == Directions.STOP:
+            movement_penalty = -50
+
         ############# ghost evaluation
         eval_ghost = 0.0
         for i in range(len(new_ghost_states)):
@@ -104,10 +109,7 @@ class ReflexAgent(Agent):
         capsule_amount = len(successor_game_state.get_capsules())
         eval_capsule = -10 * capsule_amount  # the more capsules in the game, the higher the penalty
 
-        print(action)
-        print(eval_new_score + eval_food + eval_ghost + eval_capsule)
-
-        return eval_new_score + eval_food + eval_ghost + eval_capsule
+        return eval_new_score + eval_food + eval_ghost + eval_capsule + movement_penalty
 
 def score_evaluation_function(current_game_state):
     """
