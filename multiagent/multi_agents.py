@@ -12,11 +12,11 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-from util import manhattan_distance
-from game import Directions, Actions
-from pacman import GhostRules
-import random, util
+import random
+import util
+
 from game import Agent
+from util import manhattan_distance
 
 class ReflexAgent(Agent):
     """
@@ -27,7 +27,6 @@ class ReflexAgent(Agent):
     it in any way you see fit, so long as you don't touch our method
     headers.
     """
-
 
     def get_action(self, game_state):
         """
@@ -45,7 +44,7 @@ class ReflexAgent(Agent):
         scores = [self.evaluation_function(game_state, action) for action in legal_moves]
         best_score = max(scores)
         best_indices = [index for index in range(len(scores)) if scores[index] == best_score]
-        chosen_index = random.choice(best_indices) # Pick randomly among the best
+        chosen_index = random.choice(best_indices)  # Pick randomly among the best
 
         "Add more of your code here if you want to"
 
@@ -71,10 +70,10 @@ class ReflexAgent(Agent):
         new_pos = successor_game_state.get_pacman_position()
         new_food = successor_game_state.get_food()
         new_ghost_states = successor_game_state.get_ghost_states()
-        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]        
+        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
         "*** YOUR CODE HERE ***"
         eval_new_score = successor_game_state.get_score()
-        
+
         ############# food evaluation
         foodlist = new_food.as_list()
         if foodlist:
@@ -83,31 +82,31 @@ class ReflexAgent(Agent):
         else:
             eval_food = 0.0
         eval_food = 20 * eval_food
-        
+
         ############# ghost evaluation
         eval_ghost = 0.0
         for i in range(len(new_ghost_states)):
             ghost = new_ghost_states[i]
             scared_time = new_scared_times[i]
-            
+
             ghost_pos = ghost.get_position()
             ghost_dist = manhattan_distance(new_pos, ghost_pos)
 
-            if scared_time > 1:                                                 #if the ghost is scared, pacman gets rewards for coming closer
+            if scared_time > 1:  # if the ghost is scared, pacman gets rewards for coming closer
                 eval_ghost += 1.0 / (ghost_dist + 1.0)
-            else:                                                               #else pacman gets penalized
-                if ghost_dist <= 1:                                             #with either a hefty penality if the ghost is too close
+            else:  # else pacman gets penalized
+                if ghost_dist <= 1:  # with either a hefty penality if the ghost is too close
                     eval_ghost -= 500
                 else:
-                    eval_ghost -= 1.0 / (ghost_dist + 1.0)                      #or with a small one, to incetivize keeping distance
-                    
+                    eval_ghost -= 1.0 / (ghost_dist + 1.0)  # or with a small one, to incetivize keeping distance
+
         ############# capsule evaluation
         capsule_amount = len(successor_game_state.get_capsules())
-        eval_capsule = -10 * capsule_amount                                     #the more capsules in the game, the higher the penalty
-        
+        eval_capsule = -10 * capsule_amount  # the more capsules in the game, the higher the penalty
+
         print(action)
         print(eval_new_score + eval_food + eval_ghost + eval_capsule)
-        
+
         return eval_new_score + eval_food + eval_ghost + eval_capsule
 
 def score_evaluation_function(current_game_state):
@@ -137,9 +136,9 @@ class MultiAgentSearchAgent(Agent):
 
     def __init__(self, eval_fn='score_evaluation_function', depth='2'):
         super().__init__()
-        self.index = 0 # Pacman is always agent index 0
+        self.index = 0  # Pacman is always agent index 0
         self.evaluation_function = util.lookup(eval_fn, globals())
-        self.depth = int(depth) 
+        self.depth = int(depth)
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
@@ -170,20 +169,21 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        #self.depth and self.evaluation_function
-        
+
+        # self.depth and self.evaluation_function
+
         def minimax(state, depth, agent_index):
-            if state.is_win() or state.is_lose() or depth == self.depth: # terminal test
+            if state.is_win() or state.is_lose() or depth == self.depth:  # terminal test
                 return self.evaluation_function(state)
-            
-            if agent_index == 0: # checks for the max/pacman agent
+
+            if agent_index == 0:  # checks for the max/pacman agent
                 best_value = float('-inf')
                 for a in state.get_legal_actions(agent_index):
                     successor = state.generate_successor(agent_index, a)
-                    value = minimax(successor, depth, 1) #go on to check for min/ghost agents
+                    value = minimax(successor, depth, 1)  # go on to check for min/ghost agents
                     best_value = max(best_value, value)
                 return best_value
-            else: #checks for the ghost agents
+            else:  # checks for the ghost agents
                 best_value = float('inf')
                 next_agent = (agent_index + 1) % state.get_num_agents()
                 next_depth = depth if next_agent != 0 else depth + 1
@@ -204,7 +204,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 best_action = a
 
         return best_action
-    
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -216,8 +215,47 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluation_function
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
 
+        def alpha_beta_pruning(state, depth, agent_index, alpha, beta):
+            if state.is_win() or state.is_lose() or depth == self.depth:  # terminal test
+                return self.evaluation_function(state)
+
+            if agent_index == 0:  # checks for the max/pacman agent
+                best_value = float('-inf')
+                for a in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, a)
+                    value = alpha_beta_pruning(successor, depth, 1, alpha, beta)  # go on to check for min/ghost agents
+                    best_value = max(best_value, value)
+                    alpha = max(best_value, alpha)
+                    if beta < alpha:
+                        break
+                return best_value
+            else:  # checks for the ghost agents
+                best_value = float('inf')
+                next_agent = (agent_index + 1) % state.get_num_agents()
+                next_depth = depth if next_agent != 0 else depth + 1
+
+                for a in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, a)
+                    value = alpha_beta_pruning(successor, next_depth, next_agent, alpha, beta)
+                    best_value = min(best_value, value)
+                    beta = min(beta, best_value)
+                    if beta < alpha:
+                        break
+                return best_value
+
+        best_score = float('-inf')
+        best_action = None
+        alpha, beta = float('-inf'), float('inf')
+        for a in game_state.get_legal_actions(0):
+            successor = game_state.generate_successor(0, a)
+            value = alpha_beta_pruning(successor, 0, 1, alpha, beta)
+            if value > best_score:
+                best_score = value
+                best_action = a
+            alpha = max(value, alpha)
+
+        return best_action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -243,8 +281,6 @@ def better_evaluation_function(current_game_state):
     """
     "*** YOUR CODE HERE ***"
     util.raise_not_defined()
-    
-
 
 # Abbreviation
 better = better_evaluation_function
