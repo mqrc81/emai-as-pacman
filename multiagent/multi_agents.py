@@ -71,10 +71,44 @@ class ReflexAgent(Agent):
         new_pos = successor_game_state.get_pacman_position()
         new_food = successor_game_state.get_food()
         new_ghost_states = successor_game_state.get_ghost_states()
-        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
-        
+        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]        
         "*** YOUR CODE HERE ***"
-        return successor_game_state.get_score()
+        eval_new_score = successor_game_state.get_score()
+        
+        ############# food evaluation
+        foodlist = new_food.as_list()
+        if foodlist:
+            min_food_dist = min(manhattan_distance(new_pos, food) for food in foodlist)
+            eval_food = 1.0 / (min_food_dist + 1.0)
+        else:
+            eval_food = 0.0
+        eval_food = 20 * eval_food
+        
+        ############# ghost evaluation
+        eval_ghost = 0.0
+        for i in range(len(new_ghost_states)):
+            ghost = new_ghost_states[i]
+            scared_time = new_scared_times[i]
+            
+            ghost_pos = ghost.get_position()
+            ghost_dist = manhattan_distance(new_pos, ghost_pos)
+
+            if scared_time > 1:                                                 #if the ghost is scared, pacman gets rewards for coming closer
+                eval_ghost += 1.0 / (ghost_dist + 1.0)
+            else:                                                               #else pacman gets penalized
+                if ghost_dist <= 1:                                             #with either a hefty penality if the ghost is too close
+                    eval_ghost -= 500
+                else:
+                    eval_ghost -= 1.0 / (ghost_dist + 1.0)                      #or with a small one, to incetivize keeping distance
+                    
+        ############# capsule evaluation
+        capsule_amount = len(successor_game_state.get_capsules())
+        eval_capsule = -10 * capsule_amount                                     #the more capsules in the game, the higher the penalty
+        
+        print(action)
+        print(eval_new_score + eval_food + eval_ghost + eval_capsule)
+        
+        return eval_new_score + eval_food + eval_ghost + eval_capsule
 
 def score_evaluation_function(current_game_state):
     """
@@ -136,7 +170,40 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        #self.depth and self.evaluation_function
+        
+        def minimax(state, depth, agent_index):
+            if state.is_win() or state.is_lose() or depth == self.depth: # terminal test
+                return self.evaluation_function(state)
+            
+            if agent_index == 0: # checks for the max/pacman agent
+                best_value = float('-inf')
+                for a in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, a)
+                    value = minimax(successor, depth, 1) #go on to check for min/ghost agents
+                    best_value = max(best_value, value)
+                return best_value
+            else: #checks for the ghost agents
+                best_value = float('inf')
+                next_agent = (agent_index + 1) % state.get_num_agents()
+                next_depth = depth if next_agent != 0 else depth + 1
+
+                for a in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, a)
+                    value = minimax(successor, next_depth, next_agent)
+                    best_value = min(best_value, value)
+                return best_value
+
+        best_score = float('-inf')
+        best_action = None
+        for a in game_state.get_legal_actions(0):
+            successor = game_state.generate_successor(0, a)
+            value = minimax(successor, 0, 1)
+            if value > best_score:
+                best_score = value
+                best_action = a
+
+        return best_action
     
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
